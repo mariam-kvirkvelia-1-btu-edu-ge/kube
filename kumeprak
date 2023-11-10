@@ -1,0 +1,157 @@
+1. The DevOps team would like to get the list of all Namespaces in the cluster. Get the list and save it to namespaces file.
+    - kubectl get namespaces >> namespaces
+    - cat namespaces 
+
+2. Create a single Pod of image httpd:2.4.41-alpine in Namespace btu2. The Pod should be named pod1 and the container should be named pod1-container.
+Your manager would like to run a command manually on occasion to output the status of that exact Pod. Please write a command that does this into pod1-status-command.sh. The command should use kubectl.
+    - kubectl create namespace btu2
+    - nano pod1.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod1
+  namespace: btu2
+spec:
+  containers:
+  - name: pod1-container
+    image: httpd:2.4.41-alpine
+    
+
+    - kubectl create -f pod1.yaml
+    - nano pod1-status-command.sh
+
+#!/bin/bash
+
+kubectl get pod pod1 -n btu2
+
+
+    - chmod +x pod1-status-command.sh
+    - sh pod1-status-command.sh 
+    - kubectl get pods -n btu2
+
+3. Team Neptune needs a Job template located at job.yaml. This Job should run image busybox:1.31.0 and execute sleep 2 && echo done. It should be in namespace neptune, run a total of 3 times and should execute 2 runs in parallel. Start the Job and check its history. The job should be named neb-new-job and the container neb-new-job-container.
+    - kubectl create namespace neptune
+    - nano job.yaml
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: neb-new-job
+  namespace: neptune
+spec:
+  completions: 3
+  parallelism: 2
+  template:
+    spec:
+      containers:
+      - name: neb-new-job-container
+        image: busybox:1.31.0
+        command:
+        - "/bin/sh"
+        - "-c"
+        - "sleep 2 && echo done"
+      restartPolicy: Never
+
+
+    - kubectl create -f job.yaml
+    - kubectl describe job neb-new-job -n neptune
+    - kubectl get jobs -n neptune
+
+
+5.Create a single Pod named pod4 in Namespace btu-4 of image busybox:1.31.0. The Pod should have a readiness-probe executing cat /tmp/ready. It should initially wait 5 and periodically wait 10 seconds. This will set the container ready only if the file /tmp/ready exists. The Pod should run the command touch /tmp/ready && sleep 1d, which will create the necessary file to be ready and then idles. Create the Pod and confirm it starts.
+
+    - kubectl create namespace btu-4
+    - nano pod4.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod4
+  namespace: btu-4
+spec:
+  containers:
+  - name: pod4-container
+    image: busybox:1.31.0
+    command:
+    - "/bin/sh"
+    - "-c"
+    - "touch /tmp/ready && sleep 1d"
+    readinessProbe:
+      exec:
+        command:
+        - cat
+        - /tmp/ready
+      initialDelaySeconds: 5
+      periodSeconds: 10
+    volumeMounts:
+    - name: shared-data
+      mountPath: /tmp
+  volumes:
+  - name: shared-data
+    emptyDir: {}
+
+
+    - kubectl create -f pod4.yaml
+    - kubectl get pods -n btu-4
+
+5. Create a new Secret secret1 in btu-5 namespace which contains user=test and pass=pwd.
+
+
+    - kubectl create namespace btu-5
+    - secret.yaml
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret1
+  namespace: btu-5
+type: Opaque
+data:
+  user: dGVzdA==  # Base64 encoded value of 'test'
+  pass: cHdk      # Base64 encoded value of 'pwd'
+
+
+    - kubectl create -f secret.yaml
+    - k get secret -n btu-5
+
+6.Create a single Pod named pod6 in Namespace default of image busybox:1.31.0. The Pod should have a readiness-probe executing cat /tmp/ready. It should initially wait 5 and periodically wait 10 seconds. This will set the container ready only if the file /tmp/ready exists.
+The Pod should run the command touch /tmp/ready && sleep 1d, which will create the necessary file to be ready and then idles. Create the Pod and confirm it starts.
+
+
+
+    - kubectl create namespac
+    - kubectl get namespace
+    - nano pod6.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod6
+  namespace: default
+spec:
+  containers:
+  - name: pod6-container
+    image: busybox:1.31.0
+    command:
+    - "/bin/sh"
+    - "-c"
+    - "touch /tmp/ready && sleep 1d"
+    readinessProbe:
+      exec:
+        command:
+        - cat
+        - /tmp/ready
+      initialDelaySeconds: 5
+      periodSeconds: 10
+    volumeMounts:
+    - name: shared-data
+      mountPath: /tmp
+  volumes:
+  - name: shared-data
+    emptyDir: {}
+
+
+
+    - kubectl create -f pod6.yaml /// kubectl apply -f pod6.yaml
+    - kubectl get pods -n default
